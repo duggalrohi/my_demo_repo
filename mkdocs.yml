@@ -1,0 +1,15 @@
+site_name: My MkDocs Site
+docs_dir: docs  # Directory containing your source documentation files
+site_dir: site  # Directory where the generated HTML site will be placed
+
+nav:
+  - Home: index.md
+        #- About: about.md
+        #  # Add more navigation items as needed
+        #
+theme:
+  name: readthedocs 
+        #
+plugins:
+  - search
+        #        # Add more plugins as needed
