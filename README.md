@@ -1,1 +1,5 @@
-# my_demo_repo
+This repo is for testing.
+
+========================
+
+Only feature branch should be used.
