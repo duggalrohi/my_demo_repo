@@ -1,90 +1,254 @@
-# -*- mode: ruby -*-
-# vi: set ft=ruby :
+# Define the list of machines
+slurm_cluster = {
+    :controller => {
+        :hostname => "controller",
+        :ipaddress => "192.168.33.10"
+    },
+    :server1 => {                                                              
+        :hostname => "server1",
+        :ipaddress => "192.168.33.11"
+    },
+    :server2 => {                                                              
+        :hostname => "server2",
+        :ipaddress => "192.168.33.12"
+    }
+}
 
-# All Vagrant configuration is done below. The "2" in Vagrant.configure
-# configures the configuration version (we support older styles for
-# backwards compatibility). Please don't change it unless you know what
-# you're doing.
-Vagrant.configure("2") do |config|
-  config.vm.provider "virtalbox" do |v|
-    v.gui = true
-  end
-  # The most common configuration options are documented and commented below.
-  # For a complete reference, please see the online documentation at
-  # https://docs.vagrantup.com.
+# Provisioning inline script
+$script = <<SCRIPT
+sudo dnf -y config-manager --set-enabled crb;
+sudo dnf install epel-release -y;
+sudo crb enable;
+sudo rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org;
+sudo dnf install https://www.elrepo.org/elrepo-release-9.el9.elrepo.noarch.rpm -y;
+sudo dnf --enablerepo=elrepo-kernel install kernel-ml -y;
+# sudo sed -i "s/^GRUB_DEFAULT=.*/GRUB_DEFAULT=0/" /etc/default/grub;
+sudo grub2-mkconfig -o /boot/grub2/grub.cfg;
 
-  # Every Vagrant development environment requires a box. You can search for
-  # boxes at https://vagrantcloud.com/search.
-  config.vm.define "ansible-controller" do |controller|
-    controller.vm.hostname = "controller"
-  end
-  config.vm.box = "base"
-  config.ssh.insert_key = false
+sudo dnf install -y ansible;
+sudo dnf install -y top htop vim slurm slurm-slurmctld slurm-slurmd munge munge-libs munge-devel wget slurm-llnl;
+echo -e "\n\n\n" | ssh-keygen -t rsa;
+ssh-copy-id -i ~/.ssh/id_rsa.pub vagrant@server1;
+ssh-copy-id -i ~/.ssh/id_rsa.pub vagrant@server2;
 
-  # Disable automatic box update checking. If you disable this, then
-  # boxes will only be checked for updates when the user runs
-  # `vagrant box outdated`. This is not recommended.
-  # config.vm.box_check_update = false
+echo "192.168.33.10    controller" >> /etc/hosts;
+echo "192.168.33.11    server1" >> /etc/hosts;
+echo "192.168.33.12    server2" >> /etc/hosts;
 
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine. In the example below,
-  # accessing "localhost:8080" will access port 80 on the guest machine.
-  # NOTE: This will enable public access to the opened port
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
+wget https://raw.github.com/guillermo-carrasco/mussolblog/master/setting_up_a_testing_SLURM_cluster/slurm.conf;
+sudo dnf install -y fio;
+SCRIPT
 
-  # Create a forwarded port mapping which allows access to a specific port
-  # within the machine from a port on the host machine and only allow access
-  # via 127.0.0.1 to disable public access
-  # config.vm.network "forwarded_port", guest: 80, host: 8080, host_ip: "127.0.0.1"
+Vagrant.configure("2") do |global_config|
+    slurm_cluster.each_pair do |name, options|
+        global_config.vm.define name do |config|
+            # VM configurations
+            config.ssh.insert_key = false
+            config.ssh.private_key_path = "C:\\Users\\rohit\\.vagrant.d\\insecure_private_keys\\vagrant.key.ed25519"
+            
+            if name == :server2
+                config.vm.box = "bento/rockylinux-8"
+            else
+                config.vm.box = "bento/rockylinux-9"
+            end
 
-  # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
-  # config.vm.network "private_network", ip: "192.168.33.10"
+            config.vm.hostname = options[:hostname]
+            config.vm.network :private_network, ip: options[:ipaddress]
+            config.vm.network "forwarded_port", guest: 80, host: 8080, auto_correct: true
+            config.vm.usable_port_range = 8000..9000
 
-  # Create a public network, which generally matched to bridged network.
-  # Bridged networks make the machine appear as another physical device on
-  # your network.
-  # config.vm.network "public_network"
+            # VM specifications
+            config.vm.provider :virtualbox do |v|
+                v.customize ["modifyvm", :id, "--memory", "512"]
+                v.gui = false
+            end
 
-  # Share an additional folder to the guest VM. The first argument is
-  # the path on the host to the actual folder. The second argument is
-  # the path on the guest to mount the folder. And the optional third
-  # argument is a set of non-required options.
-  # config.vm.synced_folder "../data", "/vagrant_data"
+            # Define port forwarding for the "controller" machine
+            if name == :controller
+                config.vm.network "forwarded_port", guest: 22, host: 2222, auto_correct: true
+            end
 
-  # Disable the default share of the current code directory. Doing this
-  # provides improved isolation between the vagrant box and your host
-  # by making sure your Vagrantfile isn't accessable to the vagrant box.
-  # If you use this you may want to enable additional shared subfolders as
-  # shown above.
-  # config.vm.synced_folder ".", "/vagrant", disabled: true
+            # Define port forwarding for the "server1" machine
+            if name == :server1
+                config.vm.network "forwarded_port", guest: 22, host: 2223, auto_correct: true
+            end
 
-  # Provider-specific configuration so you can fine-tune various
-  # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
-  # config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-  #   vb.gui = true
-  #
-  #   # Customize the amount of memory on the VM:
-  #   vb.memory = "1024"
-  # end
-  #
-  # View the documentation for the provider you are using for more
-  # information on available options.
+            # Define port forwarding for the "server2" machine
+            if name == :server2
+                config.vm.network "forwarded_port", guest: 22, host: 2224, auto_correct: true
+            end
 
-  # Enable provisioning with a shell script. Additional provisioners such as
-  # Ansible, Chef, Docker, Puppet and Salt are also available. Please see the
-  # documentation for more information about their specific syntax and use.
-  # config.vm.provision "shell", inline: <<-SHELL
-  #   apt-get update
-  #   apt-get install -y apache2
-  # SHELL
-  config.vm.box = "centos/7"
-  config.vm.provision "shell", inline: <<-SHELL
-    sudo yum install epel-release -y
-    sudo yum install ansible -y
-  SHELL
-  
+            # VM provisioning
+            config.vm.provision :shell, :inline => $script
+        end
+    end
 end
+
+#------------------------------------------------
+# Previous version (14/08/2024 RD)
+
+
+ 
+#     #Define the list of machines
+#     slurm_cluster = {
+#         :controller => {
+#             :hostname => "controller",
+#             :ipaddress => "192.168.33.10"
+#         },
+#         :server1 => {                                                              
+#             :hostname => "server1",
+#             :ipaddress => "192.168.33.11"
+#         }
+#         # ,
+#         # :server2 => {                                                              
+#         #     :hostname => "server2",
+#         #     :ipaddress => "192.168.33.12"
+#         # }
+#     }
+
+#     #Provisioning inline script
+#     $script = <<SCRIPT
+#     # echo " ";
+#     # SCRIPT
+#     # echo " "
+#     sudo dnf -y config-manager --set-enabled crb;
+#     sudo dnf install epel-release -y;
+#     sudo crb enable ;
+#     sudo rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org;
+#     sudo dnf install https://www.elrepo.org/elrepo-release-9.el9.elrepo.noarch.rpm -y;
+#     sudo dnf --enablerepo=elrepo-kernel install kernel-ml -y;
+#     sudo sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=0/' /etc/default/grub;
+#     sudo grub2-mkconfig -o /boot/grub2/grub.cfg;
+
+#     sudo dnf install -y ansible ;
+#     sudo dnf install -y top ;
+#     sudo dnf install -y htop ;
+#     sudo dnf install -y vim ;
+#     sudo dnf install -y slurm; 
+#     sudo dnf install -y slurm-slurmctld ;
+#     sudo dnf install -y slurm-slurmd ;
+#     sudo dnf install -y munge ;
+#     sudo dnf install -y munge-libs ;
+#     sudo dnf install -y munge-devel ;
+#     sudo dnf install -y wget ;
+#     sudo dnf install -y slurm-llnl;
+#     echo -e "\n\n\n" | ssh-keygen -t rsa;
+#     ssh-copy-id -i ~/.ssh/id_rsa.pub vagrant@server1;
+#     # ssh-copy-id -i ~/.ssh/id_rsa.pub vagrant@server2
+
+#     echo "192.168.33.10    controller" >> /etc/hosts;
+#     echo "192.168.33.11    server1" >> /etc/hosts;
+#     # echo "192.168.33.12    server2" >> /etc/hosts
+#     wget https://raw.github.com/guillermo-carrasco/mussolblog/master/setting_up_a_testing_SLURM_cluster/slurm.conf;
+#     sudo dnf install -y epel-release;
+#     sudo dnf install -y fio;
+#     SCRIPT
+
+#     Vagrant.configure("2") do |global_config|
+        
+        
+
+#         slurm_cluster.each_pair do |name, options|
+#             global_config.vm.define name do |config|
+                
+                
+#                 #VM configurations
+#                 config.ssh.insert_key = false
+#                 # config.ssh.forward_agent = true
+#                 # config.ssh.forward_x11 = true
+#                 # Configure SSH access
+#                 # config.ssh.username = "rohit"
+#                 config.ssh.private_key_path = "C:\\Users\\rohit\\.vagrant.d\\insecure_private_keys\\vagrant.key.ed25519"
+#                 # config.ssh.password = "vagrant"
+
+#                 config.vm.box = "bento/rockylinux-9"
+#                 # config.vm.network "private_network", ip: "192.168.33.10"
+#                 config.vm.network "public_network"
+#                 config.vm.hostname = "#{name}"
+#                 config.vm.network :private_network, ip: options[:ipaddress]
+#                 config.vm.network "forwarded_port", guest: 80, host: 8080, auto_correct: true
+#                 config.vm.usable_port_range = 8000..9000
+#                 # config.vm.synced_folder "C:\\Users\\rohit\\Desktop\\projects\\cluster", "/home/vagrant"
+#                 config.vm.provider :virtualbox do |v|
+#                     v.customize ["modifyvm", :id, "--memory", "512"]
+#                     v.gui = false
+#                 end
+
+#                 config.vm.define "controller", primary: true do |controller|
+#                     controller.vm.network "forwarded_port", guest: 22, host: 2222, auto_correct: true
+#                     controller.vm.usable_port_range=(8000..9000)
+#                 # Add any additional port forwarding configuration specific to the "controller" machine
+#                 end
+            
+#                 # Define port forwarding for the "server1" machine
+#                 config.vm.define "server1" do |server|
+#                     server.vm.network "forwarded_port", guest: 22, host: 2223, auto_correct: true
+#                     server.vm.usable_port_range=(8000..9000)
+#                 # Add any additional port forwarding configuration specific to the "server" machine
+#                 end
+
+#                 config.vm.box = "bento/rockylinux-8"
+#                 config.vm.provider  "virtualbox" do |vb|
+#                     vb.memory = "512"
+#                     vb.name = "server2"
+#                 end
+#                 config.vm.provision :shell, :inline => $script
+#                 config.vm.network "forwarded_port", guest: 22, host: 2224, auto_correct: true
+#                 config.vm.usable_port_range=(8000..9000)
+
+#                 # # Define port forwarding for the "server2" machine
+#                 # config.vm.define "server2" do |server|
+#                 #     server.vm.network "forwarded_port", guest: 22, host: 2224, auto_correct: true
+#                 #     server.vm.usable_port_range=(8000..9000)
+#                 # # Add any additional port forwarding configuration specific to the "server" machine
+#                 # end
+
+#                 #VM specifications
+#                 # config.vm.provider :virtualbox do |v|
+#                 #     v.customize ["modifyvm", :id, "--memory", "512"]
+#                 #     v.gui = true
+#                 # end
+
+#                 #VM provisioning
+#                 #ssh_pub_key = File.readlines("#{Dir.home}/.ssh/id_rsa.pub").first.strip
+#                 config.vm.provision :shell, :inline => $script
+#             end
+#         end
+#     end
+
+
+
+#     #Provisioning inline script
+#     # $script = <<SCRIPT
+#     # echo " "
+#     # sudo dnf -y config-manager --set-enabled crb
+#     # sudo dnf install epel-release -y
+#     # sudo crb enable 
+#     # sudo rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+#     # sudo dnf install https://www.elrepo.org/elrepo-release-9.el9.elrepo.noarch.rpm -y
+#     # sudo dnf --enablerepo=elrepo-kernel install kernel-ml -y
+#     # sudo sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=0/' /etc/default/grub
+#     # sudo grub2-mkconfig -o /boot/grub2/grub.cfg
+
+#     # sudo dnf install -y ansible 
+#     # sudo dnf install -y top 
+#     # sudo dnf install -y htop 
+#     # sudo dnf install -y vim 
+#     # sudo dnf install -y slurm 
+#     # sudo dnf install -y slurm-slurmctld 
+#     # sudo dnf install -y slurm-slurmd 
+#     # sudo dnf install -y munge 
+#     # sudo dnf install -y munge-libs 
+#     # sudo dnf install -y munge-devel 
+#     # sudo dnf install -y wget 
+#     # sudo dnf install -y slurm-llnl
+#     # echo -e "\n\n\n" | ssh-keygen -t rsa
+#     # ssh-copy-id -i ~/.ssh/id_rsa.pub vagrant@server1
+#     # ssh-copy-id -i ~/.ssh/id_rsa.pub vagrant@server2
+
+#     # echo "192.168.33.10    controller" >> /etc/hosts
+#     # echo "192.168.33.11    server1" >> /etc/hosts
+#     # echo "192.168.33.12    server2" >> /etc/hosts
+#     # wget https://raw.github.com/guillermo-carrasco/mussolblog/master/setting_up_a_testing_SLURM_cluster/slurm.conf
+#     # SCRIPT
+# 
