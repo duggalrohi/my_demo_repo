@@ -4,7 +4,12 @@ name: Send Email on Push
 on:
   push:
     branches:
-      - 'origin/main'
+      - main
+# on:
+#   pull_request:
+#     # Sequence of patterns matched against refs/heads
+#     branches:
+#       - main
 
 
   
