@@ -4,7 +4,7 @@ name: Send Email on Push
 on:
   push:
     branches:
-      - '*'
+      - 'main'
 
 
   
@@ -18,10 +18,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Send email
-        env: 
+        #env: 
           #EMAIL_ADDRESS: ${{secrets.EMAIL_ADDRESS}}
-          EMAIL_ADDRESS: rohit.duggal@vuw.ac.nz
+          
         run: |
+          EMAIL_ADDRESS="rohit.duggal@vuw.ac.nz"
           SUBJECT="github action was used"
-          BODY="github action was used"
+          BODY="my_demo_repo is undergoing changes"
           echo -e "Subject:$SUBJECT\n$BODY" | mail -s "$SUBJECT" "$EMAIL_ADDRESS"
