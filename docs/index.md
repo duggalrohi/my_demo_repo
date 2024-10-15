@@ -1,33 +1,16 @@
 # Welcome to the Website
 ## Come back for more
 
-!!! note "Welcome"
+!!! example "Welcome"
   
-    === Intro
+    === "Intro"
+
         ``` markdown
-        This site is for demonstration purposes.
+        * This site is for demonstration purposes.
         ```
 
-    === Aim
-        ``` markdown
-        Understand mkdocs.
-        ```
-
-
-  !!! example
-
-    === "Unordered List"
+    === "Aim"
 
         ``` markdown
-        * Sed sagittis eleifend rutrum
-        * Donec vitae suscipit est
-        * Nulla tempor lobortis orci
-        ```
-
-    === "Ordered List"
-
-        ``` markdown
-        1. Sed sagittis eleifend rutrum
-        2. Donec vitae suscipit est
-        3. Nulla tempor lobortis orci
+        1. Understand mkdocs.
         ```
