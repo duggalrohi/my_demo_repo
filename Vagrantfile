@@ -2,19 +2,40 @@
 slurm_cluster = {
     :head => {
         :hostname => "head",
-        :ipaddress => "192.168.56.10"
+        :ipaddress => "192.168.56.10",
+        :port => "2222",
+        :box => "bento/rockylinux-8",
+        :memory => "2048",
+        :cpus => "4",
+        :gui => false
     },
     :compute => {                                                              
         :hostname => "compute",
-        :ipaddress => "192.168.56.11"
+        :ipaddress => "192.168.56.11",
+        :port => "2223",
+        :box => "bento/rockylinux-8",
+        :memory => "2048",
+        :cpus => "4",
+        :gui => false
     },
     :database => {                                                              
         :hostname => "database",
-        :ipaddress => "192.168.56.12"
+        :ipaddress => "192.168.56.12",
+        :port => "2224",
+        :box => "bento/rockylinux-8",
+        :memory => "1024",
+        :cpus => "1",
+        :gui => false
     },
     :extra => {                                                              
         :hostname => "extra",
-        :ipaddress => "192.168.56.13"
+        :ipaddress => "192.168.56.13",
+        :port => "2225",
+        :box => "bento/rockylinux-8",
+        :memory => "1024",
+        :cpus => "1",
+        :gui => false
+
     }
 }
 
@@ -27,8 +48,7 @@ Vagrant.configure("2") do |global_config|
             # VM configurations
             config.ssh.insert_key = false
             config.ssh.forward_agent = true
-            config.ssh.forward_x11=true
-            config.vm.synced_folder '.', '/vagrant', disabled: true
+            config.vm.synced_folder '.', '/vagrant'
             config.ssh.keys_only=true
             
             # Define port forwarding for the "server3" machine
@@ -36,13 +56,13 @@ Vagrant.configure("2") do |global_config|
                 config.vm.hostname = options[:hostname]
                 config.vm.network :private_network, ip: options[:ipaddress]
                 config.vm.usable_port_range = 8000..9000
-                config.vm.box = "bento/rockylinux-8"                
-                config.vm.network "forwarded_port", guest: 22, host: 2222, auto_correct: true
+                config.vm.box = options[:box]                
+                config.vm.network "forwarded_port", guest: 22, host: options[:port], auto_correct: true
                 # VM specifications
                 config.vm.provider :virtualbox do |v|
-                    v.customize ["modifyvm", :id, "--memory", "2048"]
-                    v.cpus = 4
-                    v.gui = false
+                    v.customize ["modifyvm", :id, "--memory", options[:memory]]
+                    v.cpus = options[:cpus]
+                    v.gui = options[:gui]
                 end
             end
 
@@ -51,13 +71,13 @@ Vagrant.configure("2") do |global_config|
                 config.vm.hostname = options[:hostname]
                 config.vm.network :private_network, ip: options[:ipaddress]
                 config.vm.usable_port_range = 8000..9000
-                config.vm.box = "bento/rockylinux-8"                
-                config.vm.network "forwarded_port", guest: 22, host: 2223, auto_correct: true
+                config.vm.box = options[:box]                
+                config.vm.network "forwarded_port", guest: 22, host: options[:port], auto_correct: true
                 # VM specifications
                 config.vm.provider :virtualbox do |v|
-                    v.customize ["modifyvm", :id, "--memory", "2048"]
-                    v.cpus = 4
-                    v.gui = false
+                    v.customize ["modifyvm", :id, "--memory", options[:memory]]
+                    v.cpus = options[:cpus]
+                    v.gui = options[:gui]
                 end
             end
 
@@ -66,13 +86,13 @@ Vagrant.configure("2") do |global_config|
                 config.vm.hostname = options[:hostname]
                 config.vm.network :private_network, ip: options[:ipaddress]
                 config.vm.usable_port_range = 8000..9000
-                config.vm.box = "bento/rockylinux-8"                
-                config.vm.network "forwarded_port", guest: 22, host: 2224, auto_correct: true
+                config.vm.box = options[:box]                
+                config.vm.network "forwarded_port", guest: 22, host: options[:port], auto_correct: true
                 # VM specifications
                 config.vm.provider :virtualbox do |v|
-                    v.customize ["modifyvm", :id, "--memory", "1024"]
-                    v.cpus = 1
-                    v.gui = false
+                    v.customize ["modifyvm", :id, "--memory", options[:memory]]
+                    v.cpus = options[:cpus]
+                    v.gui = options[:gui]
                 end
             end
 
@@ -81,13 +101,13 @@ Vagrant.configure("2") do |global_config|
                 config.vm.hostname = options[:hostname]
                 config.vm.network :private_network, ip: options[:ipaddress]
                 config.vm.usable_port_range = 8000..9000
-                config.vm.box = "bento/rockylinux-8"                
-                config.vm.network "forwarded_port", guest: 22, host: 2225, auto_correct: true
+                config.vm.box = options[:box]                
+                config.vm.network "forwarded_port", guest: 22, host: options[:port], auto_correct: true
                 # VM specifications
                 config.vm.provider :virtualbox do |v|
-                    v.customize ["modifyvm", :id, "--memory", "1024"]
-                    v.cpus = 1
-                    v.gui = false
+                    v.customize ["modifyvm", :id, "--memory", options[:memory]]
+                    v.cpus = options[:cpus]
+                    v.gui = options[:gui]
                 end
             end
 
