@@ -9,6 +9,11 @@ nav:
         #
 theme:
   name: material #readthedocs 
+
+markdown_extensions:
+  - admonition
+  - pymdownx.tabbed:
+      alternate_style: true
         #
 plugins:
   - search
