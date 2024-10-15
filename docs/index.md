@@ -2,8 +2,13 @@
 ## Come back for more
 
 !!! note "Welcome"
-  === Intro
-    This site is for demonstration purposes.
+  
+    === Intro
+        ``` markdown
+        This site is for demonstration purposes.
+        ```
 
-  === Aim
-    Understand mkdocs.
+    === Aim
+        ``` markdown
+        Understand mkdocs.
+        ```
