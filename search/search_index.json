@@ -1,0 +1,1 @@
+{"config":{"lang":["en"],"separator":"[\\s\\-]+","pipeline":["stopWordFilter"]},"docs":[{"location":"","title":"Welcome to the Website","text":""},{"location":"#come-back-for-more","title":"Come back for more","text":"<p>Welcome</p> IntroAim <pre><code>* This site is for demonstration purposes.\n</code></pre> <pre><code>1. Understand mkdocs.\n</code></pre>"}]}
