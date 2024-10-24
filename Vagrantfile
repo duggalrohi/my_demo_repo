@@ -34,7 +34,8 @@ slurm_cluster = {
         :box => "bento/rockylinux-8",
         :memory => "1024",
         :cpus => "1",
-        :gui => false
+        :gui => false,
+        :disk_size => "4GB"
 
     }
 }
@@ -108,6 +109,10 @@ Vagrant.configure("2") do |global_config|
                     v.customize ["modifyvm", :id, "--memory", options[:memory]]
                     v.cpus = options[:cpus]
                     v.gui = options[:gui]
+                end
+
+                (0..2).each do |i|
+                    config.vm.disk :disk, size: options[:disk_size], name: "disk-#{i}"
                 end
             end
 
