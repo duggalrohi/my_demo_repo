@@ -31,12 +31,11 @@ slurm_cluster = {
         :hostname => "extra",
         :ipaddress => "192.168.56.13",
         :port => "2225",
-        :box => "bento/rockylinux-8",
+        :box => "bento/rockylinux-9",
         :memory => "1024",
         :cpus => "1",
         :gui => false,
         :disk_size => "4GB"
-
     }
 }
 
@@ -61,6 +60,7 @@ Vagrant.configure("2") do |global_config|
                 config.vm.network "forwarded_port", guest: 22, host: options[:port], auto_correct: true
                 # VM specifications
                 config.vm.provider :virtualbox do |v|
+                    v.name = options[:hostname]
                     v.customize ["modifyvm", :id, "--memory", options[:memory]]
                     v.cpus = options[:cpus]
                     v.gui = options[:gui]
@@ -76,6 +76,7 @@ Vagrant.configure("2") do |global_config|
                 config.vm.network "forwarded_port", guest: 22, host: options[:port], auto_correct: true
                 # VM specifications
                 config.vm.provider :virtualbox do |v|
+                    v.name = options[:hostname]
                     v.customize ["modifyvm", :id, "--memory", options[:memory]]
                     v.cpus = options[:cpus]
                     v.gui = options[:gui]
@@ -91,6 +92,7 @@ Vagrant.configure("2") do |global_config|
                 config.vm.network "forwarded_port", guest: 22, host: options[:port], auto_correct: true
                 # VM specifications
                 config.vm.provider :virtualbox do |v|
+                    v.name = options[:hostname]
                     v.customize ["modifyvm", :id, "--memory", options[:memory]]
                     v.cpus = options[:cpus]
                     v.gui = options[:gui]
@@ -106,11 +108,11 @@ Vagrant.configure("2") do |global_config|
                 config.vm.network "forwarded_port", guest: 22, host: options[:port], auto_correct: true
                 # VM specifications
                 config.vm.provider :virtualbox do |v|
+                    v.name = options[:hostname]
                     v.customize ["modifyvm", :id, "--memory", options[:memory]]
                     v.cpus = options[:cpus]
                     v.gui = options[:gui]
                 end
-
                 (0..2).each do |i|
                     config.vm.disk :disk, size: options[:disk_size], name: "disk-#{i}"
                 end
