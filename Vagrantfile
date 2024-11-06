@@ -7,7 +7,8 @@ slurm_cluster = {
         :box => "bento/rockylinux-8",
         :memory => "2048",
         :cpus => "4",
-        :gui => false
+        :gui => false,
+        :setup_script => "PostVagrantScript.sh"
     },
     :compute => {                                                              
         :hostname => "compute",
@@ -31,7 +32,7 @@ slurm_cluster = {
         :hostname => "extra",
         :ipaddress => "192.168.56.13",
         :port => "2225",
-        :box => "bento/rockylinux-9",
+        :box => "bento/rockylinux-8",
         :memory => "1024",
         :cpus => "1",
         :gui => false,
@@ -65,6 +66,8 @@ Vagrant.configure("2") do |global_config|
                     v.cpus = options[:cpus]
                     v.gui = options[:gui]
                 end
+                # VM Provision Script
+                config.vm.provision "shell", privileged: true, path: options[:setup_script]
             end
 
             # Define port forwarding for the "server3" machine
@@ -112,6 +115,8 @@ Vagrant.configure("2") do |global_config|
                     v.customize ["modifyvm", :id, "--memory", options[:memory]]
                     v.cpus = options[:cpus]
                     v.gui = options[:gui]
+                    # v.linked_clone = true
+                    v.check_guest_additions = false
                 end
                 (0..2).each do |i|
                     config.vm.disk :disk, size: options[:disk_size], name: "disk-#{i}"
