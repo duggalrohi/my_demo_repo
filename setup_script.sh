@@ -1,4 +1,93 @@
 #!/bin/bash
+# This script sets up necessary dependencies for a development environment
+# using DNF, with clean and organized code.
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+
+# Define repository and packages
+ENABLE_REPO="epel"
+DISABLE_REPO="OpenHPC-updates,OpenHPC"
+PACKAGES=(
+    ansible
+    cryptsetup
+    dbus-devel
+    @Development
+    fio
+    freeipmi-devel
+    gcc
+    git
+    golang
+    gtk2-devel
+    htop
+    http-parser-devel
+    hwloc
+    hwloc-devel
+    iftop
+    jq
+    json-c-devel
+    libbpf
+    libibmad
+    libibumad
+    libjwt-devel
+    libseccomp-devel
+    libssh2-devel
+    libuuid-devel
+    man2html
+    mariadb-devel
+    mariadb-server
+    munge
+    munge
+    munge-devel
+    munge-devel
+    munge-libs
+    munge-libs
+    ncdu
+    ncurses-devel
+    numactl
+    numactl-devel
+    openmpi
+    openssl
+    openssl-devel
+    openssl-devel
+    pam-devel
+    perl-ExtUtils-MakeMaker
+    perl-Switch
+    python3
+    python3-mysql
+    readline-devel
+    rpm-build
+    rrdtool-devel
+    singularity-ce
+    slurm
+    slurm-devel
+    slurm-pam_slurm
+    slurm-slurmctld
+    slurm-slurmd
+    slurm-slurmdbd
+    squashfs-tools 
+    vim
+    vim-enhanced
+    wget
+    xorg-x11-xauth
+
+)
+
+EXCLUDE_PACKAGES=(
+    lua
+    lua-devel
+)
+
+# Function to enable a repo and install packages
+install_packages() {
+    echo "Enabling repository: $REPO"
+    echo "Installing required packages..."
+    echo "${PACKAGES[@]}"
+    # Use "${PACKAGES[@]}" to expand the package list
+    dnf --enablerepo="$ENABLE_REPO" install -y "${PACKAGES[@]}" --disablerepo="$DISABLE_REPO"
+}
+
 
 ##############################################
 # Basic OS Setup
@@ -10,81 +99,68 @@ if ! grep -q "head" /etc/hosts; then
     echo "192.168.56.11    compute" >> /etc/hosts;
     echo "192.168.56.12    database" >> /etc/hosts;
     echo "192.168.56.13    login" >> /etc/hosts;
-fi
-
-# Disable selinux and firewall
-setenforce 0
-cat >/etc/selinux/config<<__EOF
+    # Disable selinux and firewall
+    setenforce 0
+    cat >/etc/selinux/config<<__EOF
 SELINUX=disabled
 SELINUXTYPE=targeted
 __EOF
-systemctl disable firewalld
-systemctl stop firewalld
-#########################################
+    systemctl disable firewalld
+    systemctl stop firewalld
+    #########################################
+fi
+
+
 
 #########################################
 # Useful software to have on the cluster
 #########################################
+if ! grep -q '^#exclude=slurm*' /etc/yum.repos.d/epel.repo; then
+    
+    rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org;
+    dnf install https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm -y;
+    dnf config-manager --set-enabled powertools; # EL8
+    dnf install epel-release -y;
+    dnf clean all;
 
-# Utilities
-dnf -y install vim-enhanced htop iftop
-
-# Development
-dnf -y groupinstall "Development Tools"
-dnf install -y git golang openssl-devel libuuid-devel \
-     libseccomp-devel squashfs-tools cryptsetup
-
-# EPEL Singularity
-dnf -y install singularity
-
-# OpenMPI
-dnf -y install openmpi3 
-#########################################
+    sed -i 's/^#exclude=slurm*/#exclude=slurm*/' /etc/yum.repos.d/epel.repo;
+    
+    install_packages
+    
+    echo "Installation completed successfully."
 
 
-# echo -e '\\n\\n\\n' | ssh-keygen -t rsa;
-# dnf install -yq vim wget curl;
+    # RHEL9
+    # dnf config-manager --set-enabled crb;        # EL9
+    # dnf -y config-manager --set-enabled crb; #RHEL9
+    # crb enable;
 
-rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org;
-dnf install https://www.elrepo.org/elrepo-release-8.el8.elrepo.noarch.rpm -y;
-dnf config-manager --set-enabled powertools; # EL8
-dnf install epel-release -y;
-dnf clean all;
-#dnf config-manager --set-enabled crb;        # EL9
-# dnf -y config-manager --set-enabled crb; #RHEL9
-# crb enable;
+    # dnf install https://www.elrepo.org/elrepo-release-9.el9.elrepo.noarch.rpm -y; # For RHEL-9
+    # dnf --enablerepo=elrepo-kernel install kernel-ml -y;
+    # sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=0/' /etc/default/grub;
+    # grub2-mkconfig -o /boot/grub2/grub.cfg;
+    # dnf install -y ansible;
 
-# dnf install https://www.elrepo.org/elrepo-release-9.el9.elrepo.noarch.rpm -y; # For RHEL-9
-# dnf --enablerepo=elrepo-kernel install kernel-ml -y;
-# sed -i 's/^GRUB_DEFAULT=.*/GRUB_DEFAULT=0/' /etc/default/grub;
-# grub2-mkconfig -o /boot/grub2/grub.cfg;
-# dnf install -y ansible;
-dnf install -y mariadb-server mariadb-devel;
-dnf --enablerepo=epel install -y htop vim slurm slurm-slurmctld slurm-slurmd slurm-devel slurm-slurmdbd slurm-pam_slurm munge munge-libs munge-devel wget;
-dnf --enablerepo=epel install  -y rpm-build gcc python3 openssl openssl-devel pam-devel numactl numactl-devel hwloc hwloc-devel munge munge-libs munge-devel lua lua-devel readline-devel rrdtool-devel ncurses-devel gtk2-devel libibmad libibumad perl-Switch perl-ExtUtils-MakeMaker xorg-x11-xauth dbus-devel libbpf libssh2-devel man2html freeipmi-devel http-parser-devel json-c-devel libjwt-devel jq python3-mysql; 
+fi
 
-# ssh-copy-id -i ~/.ssh/id_rsa.pub vagrant@server1;
-# ssh-copy-id -i ~/.ssh/id_rsa.pub vagrant@server2;
-# echo "192.168.56.10    head" >> /etc/hosts;
-# echo "192.168.56.11    compute" >> /etc/hosts;
-# echo "192.168.56.12    database" >> /etc/hosts;
-# echo "192.168.56.13    login" >> /etc/hosts;
-# wget https://raw.github.com/guillermo-carrasco/mussolblog/master/setting_up_a_testing_SLURM_cluster/slurm.conf;
-dnf install -y fio;
+
+
+
 
 #####################################################
 # Install slurm master
 #####################################################
 
-# Add global users
-export MUNGE_ID=994
-export SLURM_ID=1001
-groupadd -g $MUNGE_ID munge
-useradd  -m -c "MUNGE Uid 'N' Gid Emporium" -d /var/lib/munge -u $MUNGE_ID -g munge  -s /sbin/nologin munge
-groupadd -g $SLURM_ID slurm
-useradd  -m -c "Slurm workload manager" -d /var/lib/slurm -u $SLURM_ID -g slurm  -s /bin/bash slurm
 
-if [ -f /etc/munge/munge.key ]; then
+
+if [ ! -f /etc/munge/munge.key ]; then
+    # Add global users
+    export MUNGE_ID=994
+    export SLURM_ID=1001
+    groupadd -g $MUNGE_ID munge
+    useradd  -m -c "MUNGE Uid 'N' Gid Emporium" -d /var/lib/munge -u $MUNGE_ID -g munge  -s /sbin/nologin munge
+    groupadd -g $SLURM_ID slurm
+    useradd  -m -c "Slurm workload manager" -d /var/lib/slurm -u $SLURM_ID -g slurm  -s /bin/bash slurm
     cp /usr/lib/systemd/system/munge.service /etc/systemd/system/munge.service
     sed -i 's/ExecStart=\/usr\/sbin\/munged/ExecStart=\/usr\/sbin\/munged --num-threads 10/' /etc/systemd/system/munge.service
     /usr/sbin/create-munge-key
@@ -96,8 +172,10 @@ if [ -f /etc/munge/munge.key ]; then
     scp /etc/munge/munge.key compute:/etc/munge
 fi
 
-if [ -f /etc/slurm/slurm.conf ]; then
-    
+
+
+if [ ! -f /etc/slurm/slurm.conf ]; then
+
     # Slurm Conf
     cat <<EOF > /etc/slurm/slurm.conf
 #CommunicationParameters=EnableIPv6
@@ -143,11 +221,11 @@ SlurmctldPort=6817
 SlurmdPidFile=/var/run/slurm/slurmd.pid
 SlurmdPort=6818
 
-SlurmdSpoolDir=/var/spool/slurm/d
+SlurmdSpoolDir=/var/spool/slurm/slurmd
 SlurmUser=slurm
 
 SlurmdLogFile=/var/log/slurm/slurmd.log
-StateSaveLocation=/var/spool/slurm/ctld
+StateSaveLocation=/var/spool/slurm/slurmctld
 
 SwitchType=switch/none
 
@@ -204,16 +282,43 @@ DebugFlags=backfill,cpu_bind,priority,reservation,selecttype,steps,NO_CONF_HASH
 SlurmctldDebug=info
 SlurmdDebug=verbose
 EOF
-    scp /etc/slurm/slurm.conf head:/etc/slurm/slurm.conf
-    scp /etc/slurm/slurm.conf database:/etc/slurm/slurm.conf
-    scp /etc/slurm/slurm.conf compute:/etc/slurm/slurm.conf
+    echo "Slurm.conf written"
+    # sudo scp /etc/slurm/slurm.conf head:/etc/slurm/slurm.conf
+    sudo scp /etc/slurm/slurm.conf database:/etc/slurm/slurm.conf
+    sudo scp /etc/slurm/slurm.conf compute:/etc/slurm/slurm.conf
 fi
 
-systemctl enable munge.service
-systemctl start munge.service
-systemctl enable slurmctld.service
-systemctl start slurmctld.service
+SERVICES=(
+    munge.service
+    slurmctld.service
+)
 
+if systemctl is-active --quiet "${SERVICES[1]}"; then
+    echo ""${SERVICES[1]}" is running."
+else
+    if systemctl is-failed --quiet "${SERVICES[1]}"; then
+        if [ -f /etc/slurm/slurm.conf ]; then
+            # Correct perms
+            mkdir -p /var/spool/slurm/slurmctld
+            chown slurm: /var/spool/slurm/slurmctld
+            chmod 755 /var/spool/slurm/slurmctld
+            touch /var/log/slurm/slurmctld.log
+            chown slurm: /var/log/slurm/slurmctld.log
+            touch /var/log/slurm/slurm_jobacct.log /var/log/slurm/slurm_jobcomp.log
+            chown slurm: /var/log/slurm/slurm_jobacct.log /var/log/slurm/slurm_jobcomp.log
+        fi 
+        
+        # Take additional actions here, e.g., restart the service or send a notification
+        systemctl enable "${SERVICES[@]}"
+        systemctl restart "${SERVICES[@]}"
+        echo "$(systemctl status "${SERVICES[1]}")"
+    else
+        echo ""${SERVICES[1]}" is not running but has not failed (e.g., stopped)."
+    fi
+fi
+
+# Check sinfo works
+sinfo
 
 
 
