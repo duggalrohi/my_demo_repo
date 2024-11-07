@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# For backup
+# tar --exclude='/home/vagrant/env' --exclude='/home/vagrant/.*' -cvf /vagrant/rd_stuff.tar /home/vagrant
 # This script sets up necessary dependencies for a development environment
 # using DNF, with clean and organized code.
 
@@ -34,6 +37,9 @@ PACKAGES=(
     libseccomp-devel
     libssh2-devel
     libuuid-devel
+    lua
+    lua-devel
+    luarocks
     man2html
     mariadb-devel
     mariadb-server
@@ -74,9 +80,9 @@ PACKAGES=(
 
 )
 
-EXCLUDE_PACKAGES=(
-    lua
-    lua-devel
+SERVICES=(
+    munge.service
+    slurmctld.service
 )
 
 # Function to enable a repo and install packages
@@ -288,10 +294,7 @@ EOF
     sudo scp /etc/slurm/slurm.conf compute:/etc/slurm/slurm.conf
 fi
 
-SERVICES=(
-    munge.service
-    slurmctld.service
-)
+
 
 if systemctl is-active --quiet "${SERVICES[1]}"; then
     echo ""${SERVICES[1]}" is running."
