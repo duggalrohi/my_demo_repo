@@ -1,6 +1,6 @@
 
-# Welcome to the MPI 
-## Debug Errors
+# Welcome to the CGroup Implementation 
+## HPC CGroup Logon
 
 Source: 
 Follow this implementation of [cgroups](https://hpc-syspros-basics.github.io/Advanced_Topics/Login_Node_Resource_Management/cgroups.html).

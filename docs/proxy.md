@@ -1,6 +1,6 @@
 
-# Welcome to the MPI 
-## Debug Errors
+# Welcome to the ProxyCommand Setup 
+## Slurm SSH Proxy
 
 Source: 
 Follow this implementation of [slurm-ssh-node-proxycommand](https://github.com/AaltoSciComp/slurm-ssh-node-proxycommand/blob/main/slurm-ssh-node-proxycommand).
