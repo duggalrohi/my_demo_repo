@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Send email
         env: 
-          EMAIL_ADDRESS: ${{secrets.EMAIL_ADDRESS}}
+          EMAIL_ADDRESS: ${{ secrets.EMAIL_ADDRESS }}
           
         run: |
           
