@@ -23,11 +23,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Send email
-        #env: 
-          #EMAIL_ADDRESS: ${{secrets.EMAIL_ADDRESS}}
+        env: 
+          EMAIL_ADDRESS: ${{secrets.EMAIL_ADDRESS}}
           
         run: |
-          EMAIL_ADDRESS="rohit.duggal@vuw.ac.nz"
+          
           SUBJECT="github action was used"
           BODY="my_demo_repo is undergoing changes"
           echo -e "Subject:$SUBJECT\n$BODY" | mail -s "$SUBJECT" "$EMAIL_ADDRESS"
