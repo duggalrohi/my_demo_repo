@@ -8,6 +8,7 @@ nav:
   - CGroup: cgroup.md
   - Proxy: proxy.md
   - Banner: banner.md
+  - Status: status.md
         #- About: about.md
         #  # Add more navigation items as needed
         #
