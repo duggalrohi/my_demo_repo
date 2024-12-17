@@ -9,6 +9,7 @@ nav:
   - Proxy: proxy.md
   - Banner: banner.md
   - Status: status.md
+  - Slurm_Status: slurm_status.md
         #- About: about.md
         #  # Add more navigation items as needed
         #
