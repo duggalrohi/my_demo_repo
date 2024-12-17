@@ -22,10 +22,10 @@
         PARTITION=$1
         JOB_STATE=$2
 
-        squeue -p $PARTITION -t $JOB_STATE -O "NodeList,JobId,UserName,tres-alloc:45" -h | awk '{
+        squeue -p $PARTITION -t $JOB_STATE -O "JobId,UserName,tres-alloc:45" -h | awk '{
         # Extract fields
-        user = $3
-        split($4, tres, ",")  # Split TRES field by commas
+        user = $2
+        split($3, tres, ",")  # Split TRES field by commas
         # Check if the number of fields is 4 (missing "gres/gpu"), add "gres/gpu=0" if true
         if (length(tres) == 4) {
             tres[length(tres)+1] = "gres/gpu=0"
